@@ -3,6 +3,7 @@ package controller
 import (
 	"monitoring-potensi-energi/reqres"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +17,16 @@ func (ctr Controller) Setup(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctr.Repo.PlaceSensor(ctx, req); err != nil {
+	delim := " "
+	req.Desa = strings.Trim(req.Desa, delim)
+	req.Identity = strings.Trim(req.Identity, delim)
+	req.Kecamatan = strings.Trim(req.Kecamatan, delim)
+	req.NamaLokasi = strings.Trim(req.NamaLokasi, delim)
+	req.Provinsi = strings.Trim(req.Provinsi, delim)
+	req.TipeSensor = strings.Trim(req.TipeSensor, delim)
+
+	idSensor, err := ctr.Repo.PlaceSensor(ctx, req)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
@@ -24,6 +34,7 @@ func (ctr Controller) Setup(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusAccepted, gin.H{
-		"message": "accept",
+		"message":   "accept",
+		"id_sensor": idSensor,
 	})
 }

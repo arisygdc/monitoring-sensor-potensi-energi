@@ -8,13 +8,14 @@ import (
 	"time"
 )
 
-func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) error {
-	return r.transaction(ctx, func(q *postgres.Queries) error {
-		tipe, err := q.GetTipeSensor(ctx, req.TipeSensor)
-		if err != nil {
-			return errors.New("tipe sensor tidak ditemukan")
-		}
+func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (int64, error) {
+	var idSensor int64
+	tipe, err := r.Database.Queries.GetTipeSensor(ctx, req.TipeSensor)
+	if err != nil {
+		return idSensor, errors.New("tipe sensor tidak ditemukan")
+	}
 
+	err = r.transaction(ctx, func(q *postgres.Queries) error {
 		infSensor, err := q.GetInfSensor(ctx, req.Identity)
 		if err != nil {
 			if err := q.AddInformasiSensor(ctx, postgres.AddInformasiSensorParams{
@@ -61,9 +62,13 @@ func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) er
 			DitempatkanPada: time.Now(),
 		}
 
-		if err := q.AddSensor(ctx, addSensor); err != nil {
+		idSensor, err = q.AddSensor(ctx, addSensor)
+		if err != nil {
 			return err
 		}
+
 		return nil
 	})
+
+	return idSensor, err
 }

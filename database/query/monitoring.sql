@@ -7,8 +7,8 @@ INSERT INTO informasi_sensor (status, identity) VALUES ($1, $2);
 -- name: AddMonLocation :exec
 INSERT INTO monitoring_location (nama, provinsi, kecamatan, desa) VALUES ($1, $2, $3, $4);
 
--- name: AddSensor :exec
-INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4);
+-- name: AddSensor :one
+INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4) RETURNING id;
 
 -- name: InputValueSensor :exec
 INSERT INTO value_sensor (sensor_id, data) VALUES ($1, $2);

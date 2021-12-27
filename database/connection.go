@@ -21,6 +21,7 @@ func NewPostgres(env config.Environment) (postgreDB DB, err error) {
 
 	postgreDB = DB{
 		SQLConn: SQLConn,
+		Queries: postgres.New(SQLConn),
 	}
 	return
 }

@@ -43,8 +43,8 @@ func (q *Queries) AddMonLocation(ctx context.Context, arg AddMonLocationParams) 
 	return err
 }
 
-const addSensor = `-- name: AddSensor :exec
-INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4)
+const addSensor = `-- name: AddSensor :one
+INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4) RETURNING id
 `
 
 type AddSensorParams struct {
@@ -54,14 +54,16 @@ type AddSensorParams struct {
 	DitempatkanPada time.Time `json:"ditempatkan_pada"`
 }
 
-func (q *Queries) AddSensor(ctx context.Context, arg AddSensorParams) error {
-	_, err := q.db.ExecContext(ctx, addSensor,
+func (q *Queries) AddSensor(ctx context.Context, arg AddSensorParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, addSensor,
 		arg.TipeSensorID,
 		arg.InfSensorID,
 		arg.MonLocID,
 		arg.DitempatkanPada,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const addTipeSensor = `-- name: AddTipeSensor :exec
