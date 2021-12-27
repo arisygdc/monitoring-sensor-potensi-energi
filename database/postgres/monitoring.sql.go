@@ -244,15 +244,16 @@ func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (TipeSensor, e
 }
 
 const inputValueSensor = `-- name: InputValueSensor :exec
-INSERT INTO value_sensor (sensor_id, data) VALUES ($1, $2)
+INSERT INTO value_sensor (sensor_id, data, dibuat_pada) VALUES ($1, $2, $3)
 `
 
 type InputValueSensorParams struct {
-	SensorID int32   `json:"sensor_id"`
-	Data     float64 `json:"data"`
+	SensorID   int32     `json:"sensor_id"`
+	Data       float64   `json:"data"`
+	DibuatPada time.Time `json:"dibuat_pada"`
 }
 
 func (q *Queries) InputValueSensor(ctx context.Context, arg InputValueSensorParams) error {
-	_, err := q.db.ExecContext(ctx, inputValueSensor, arg.SensorID, arg.Data)
+	_, err := q.db.ExecContext(ctx, inputValueSensor, arg.SensorID, arg.Data, arg.DibuatPada)
 	return err
 }

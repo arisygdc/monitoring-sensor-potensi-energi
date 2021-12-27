@@ -11,7 +11,7 @@ INSERT INTO monitoring_location (nama, provinsi, kecamatan, desa) VALUES ($1, $2
 INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4) RETURNING id;
 
 -- name: InputValueSensor :exec
-INSERT INTO value_sensor (sensor_id, data) VALUES ($1, $2);
+INSERT INTO value_sensor (sensor_id, data, dibuat_pada) VALUES ($1, $2, $3);
 
 -- name: GetTipeSensor :one
 SELECT * FROM tipe_sensor WHERE tipe = $1;

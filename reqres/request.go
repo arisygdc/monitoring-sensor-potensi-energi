@@ -8,3 +8,8 @@ type SetupRequest struct {
 	Kecamatan  string `json:"kecamatan"`
 	Desa       string `json:"desa"`
 }
+
+type InputValue struct {
+	IDSensor int32   `json:"id_sensor"`
+	Data     float64 `json:"data"`
+}
