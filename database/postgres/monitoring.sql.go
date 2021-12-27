@@ -190,6 +190,17 @@ func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) 
 	return items, nil
 }
 
+const getInfSensor = `-- name: GetInfSensor :one
+SELECT id, status, identity FROM informasi_sensor WHERE identity = $1
+`
+
+func (q *Queries) GetInfSensor(ctx context.Context, identity string) (InformasiSensor, error) {
+	row := q.db.QueryRowContext(ctx, getInfSensor, identity)
+	var i InformasiSensor
+	err := row.Scan(&i.ID, &i.Status, &i.Identity)
+	return i, err
+}
+
 const getMonitoringLocation = `-- name: GetMonitoringLocation :one
 SELECT id, nama, provinsi, kecamatan, desa FROM monitoring_location WHERE  nama = $1 AND provinsi = $2 AND kecamatan = $3 AND desa = $4
 `
@@ -219,13 +230,15 @@ func (q *Queries) GetMonitoringLocation(ctx context.Context, arg GetMonitoringLo
 	return i, err
 }
 
-const getTipeSensor = `-- name: GetTipeSensor :exec
+const getTipeSensor = `-- name: GetTipeSensor :one
 SELECT id, tipe FROM tipe_sensor WHERE tipe = $1
 `
 
-func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) error {
-	_, err := q.db.ExecContext(ctx, getTipeSensor, tipe)
-	return err
+func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (TipeSensor, error) {
+	row := q.db.QueryRowContext(ctx, getTipeSensor, tipe)
+	var i TipeSensor
+	err := row.Scan(&i.ID, &i.Tipe)
+	return i, err
 }
 
 const inputValueSensor = `-- name: InputValueSensor :exec

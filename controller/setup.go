@@ -16,6 +16,13 @@ func (ctr Controller) Setup(ctx *gin.Context) {
 		return
 	}
 
+	if err := ctr.Repo.CreateSensor(ctx, req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusAccepted, gin.H{
 		"message": "accept",
 	})

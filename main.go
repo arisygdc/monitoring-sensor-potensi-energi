@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	env, err := config.NewEnv("")
+	env, err := config.NewEnv(".")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -24,5 +24,6 @@ func main() {
 	ctr := controller.New(repo)
 
 	server := server.New(env, ctr)
+	server.APIRoute()
 	server.Run()
 }
