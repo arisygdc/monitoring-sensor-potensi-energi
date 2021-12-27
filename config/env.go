@@ -1,0 +1,23 @@
+package config
+
+import "github.com/spf13/viper"
+
+type Environment struct {
+	DBDriver      string `mapstructure:"DATABASE_DRIVER"`
+	DBSource      string `mapstructure:"DATABASE_SOURCE"`
+	ServerEnv     string `mapstructure:"SERVER_ENVIRONMENT"`
+	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
+}
+
+func NewEnv(path string) (env Environment, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigType("env")
+
+	viper.AutomaticEnv()
+	if err = viper.ReadInConfig(); err != nil {
+		return
+	}
+
+	err = viper.Unmarshal(&env)
+	return
+}
