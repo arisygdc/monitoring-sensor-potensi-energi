@@ -6,7 +6,7 @@ CREATE TABLE tipe_sensor (
 CREATE TABLE informasi_sensor (
     id SERIAL NOT NULL PRIMARY KEY,
     status BOOLEAN NOT NULL,
-    identity VARCHAR(30) NOT NULL,
+    identity VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE monitoring_location (
@@ -25,7 +25,7 @@ CREATE TABLE sensors (
 
     CONSTRAINT tipe_sensor
         FOREIGN KEY (tipe_sensor_id)
-        REFERENCES tipe_sensor(id)
+        REFERENCES tipe_sensor(id),
 
     CONSTRAINT monitoring_location
         FOREIGN KEY (mon_loc_id)
