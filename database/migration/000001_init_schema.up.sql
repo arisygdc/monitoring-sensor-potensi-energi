@@ -19,6 +19,7 @@ CREATE TABLE monitoring_location (
 
 CREATE TABLE sensors (
     id BIGSERIAL NOT NULL PRIMARY KEY,
+    informasi_sensor_id INT NOT NULL,
     tipe_sensor_id INT NOT NULL,
     mon_loc_id INT NOT NULL,
     ditempatkan_pada TIMESTAMP NOT NULL,
@@ -26,6 +27,10 @@ CREATE TABLE sensors (
     CONSTRAINT tipe_sensor
         FOREIGN KEY (tipe_sensor_id)
         REFERENCES tipe_sensor(id),
+    
+    CONSTRAINT informasi_sensor
+        FOREIGN KEY (informasi_sensor_id)
+        REFERENCES informasi_sensor(id),
 
     CONSTRAINT monitoring_location
         FOREIGN KEY (mon_loc_id)
