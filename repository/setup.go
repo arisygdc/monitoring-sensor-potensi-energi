@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (r Repository) CreateSensor(ctx context.Context, req reqres.SetupRequest) error {
+func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) error {
 	return r.transaction(ctx, func(q *postgres.Queries) error {
 		tipe, err := q.GetTipeSensor(ctx, req.TipeSensor)
 		if err != nil {

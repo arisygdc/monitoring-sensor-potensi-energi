@@ -16,7 +16,7 @@ func (ctr Controller) Setup(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctr.Repo.CreateSensor(ctx, req); err != nil {
+	if err := ctr.Repo.PlaceSensor(ctx, req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
