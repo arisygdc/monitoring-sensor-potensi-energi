@@ -59,7 +59,7 @@ func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (i
 			TipeSensorID:    tipe.ID,
 			InfSensorID:     infSensor.ID,
 			MonLocID:        monLoc.ID,
-			DitempatkanPada: time.Now(),
+			DitempatkanPada: time.Now().UTC(),
 		}
 
 		idSensor, err = q.AddSensor(ctx, addSensor)
