@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
+	"monitoring-potensi-energi/automated_job"
 	"monitoring-potensi-energi/config"
 	"monitoring-potensi-energi/controller"
 	"monitoring-potensi-energi/database"
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	go AutomatedstatusRefresh(ctx, db)
+	go AutomatedJobs(ctx, db.Queries)
 
 	repo := repository.New(db)
 	ctr := controller.New(repo)
@@ -35,44 +35,21 @@ func main() {
 	server.Run()
 }
 
-func AutomatedstatusRefresh(ctx context.Context, db database.DB) {
+func AutomatedJobs(ctx context.Context, db *postgres.Queries) {
 	var (
-		refreshAt, _ = time.ParseDuration("35m")
-		ErrNoRows    = errors.New("sql: no rows in result set")
+		statusRefreshInterval, _ = time.ParseDuration("35m")
 	)
+
 	log.Println("Running automated job")
+	statusRefresh := automated_job.NewStatusRefresh(statusRefreshInterval, db)
+
 	for {
 		time.Sleep(1 * time.Minute)
-		sensors, err := db.Queries.GetAllSensorOnStatus(ctx, true)
+		sensors, err := statusRefresh.GetData(ctx)
 		if err != nil {
-			if err != ErrNoRows {
-				log.Println(err)
-			}
 			continue
 		}
 
-		for _, v := range sensors {
-			lastUpdate := v.DitempatkanPada.(time.Time)
-			if v.DibuatPada != nil {
-				lastUpdate = v.DibuatPada.(time.Time)
-			}
-			log.Printf("sensor %v status online", v.Identity)
-			lastUpdate = lastUpdate.UTC()
-
-			log.Printf("now %v, last update %v", time.Now(), lastUpdate)
-			if time.Now().After(lastUpdate.Add(refreshAt)) {
-				err = db.Queries.UpdateStatusSensor(ctx, postgres.UpdateStatusSensorParams{
-					Status: false,
-					ID:     v.InfID,
-				})
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				log.Printf("sensor %v status changed to offline", v.Identity)
-			}
-			time.Sleep(1 * time.Second)
-		}
+		statusRefresh.RunJob(ctx, sensors)
 	}
 }
