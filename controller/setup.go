@@ -18,12 +18,12 @@ func (ctr Controller) Setup(ctx *gin.Context) {
 	}
 
 	delim := " "
-	req.Desa = strings.Trim(req.Desa, delim)
-	req.Identity = strings.Trim(req.Identity, delim)
-	req.Kecamatan = strings.Trim(req.Kecamatan, delim)
-	req.NamaLokasi = strings.Trim(req.NamaLokasi, delim)
-	req.Provinsi = strings.Trim(req.Provinsi, delim)
-	req.TipeSensor = strings.Trim(req.TipeSensor, delim)
+	req.Location.Desa = strings.Trim(req.Location.Desa, delim)
+	req.Sensor.Identity = strings.Trim(req.Sensor.Identity, delim)
+	req.Location.Kecamatan = strings.Trim(req.Location.Kecamatan, delim)
+	req.Location.Nama = strings.Trim(req.Location.Nama, delim)
+	req.Location.Provinsi = strings.Trim(req.Location.Provinsi, delim)
+	req.Sensor.TipeSensor = strings.Trim(req.Sensor.TipeSensor, delim)
 
 	idSensor, err := ctr.Repo.PlaceSensor(ctx, req)
 	if err != nil {
