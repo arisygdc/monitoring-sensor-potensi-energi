@@ -192,6 +192,48 @@ func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) 
 	return items, nil
 }
 
+const getAllSensorOnStatus = `-- name: GetAllSensorOnStatus :many
+SELECT si.identity, si.id as inf_id, MAX(vs.dibuat_pada) as dibuat_pada, MAX(s.ditempatkan_pada) as ditempatkan_pada FROM informasi_sensor si 
+INNER JOIN sensors s ON si.id = s.inf_sensor_id
+LEFT JOIN value_sensor vs ON s.id = vs.sensor_id
+WHERE si.status = $1 GROUP BY si.id
+`
+
+type GetAllSensorOnStatusRow struct {
+	Identity        string      `json:"identity"`
+	InfID           int32       `json:"inf_id"`
+	DibuatPada      interface{} `json:"dibuat_pada"`
+	DitempatkanPada interface{} `json:"ditempatkan_pada"`
+}
+
+func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetAllSensorOnStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllSensorOnStatus, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllSensorOnStatusRow
+	for rows.Next() {
+		var i GetAllSensorOnStatusRow
+		if err := rows.Scan(
+			&i.Identity,
+			&i.InfID,
+			&i.DibuatPada,
+			&i.DitempatkanPada,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getInfSensor = `-- name: GetInfSensor :one
 SELECT id, status, identity FROM informasi_sensor WHERE identity = $1
 `
@@ -255,5 +297,19 @@ type InputValueSensorParams struct {
 
 func (q *Queries) InputValueSensor(ctx context.Context, arg InputValueSensorParams) error {
 	_, err := q.db.ExecContext(ctx, inputValueSensor, arg.SensorID, arg.Data, arg.DibuatPada)
+	return err
+}
+
+const updateStatusSensor = `-- name: UpdateStatusSensor :exec
+UPDATE informasi_sensor SET status = $1 WHERE id = $2
+`
+
+type UpdateStatusSensorParams struct {
+	Status bool  `json:"status"`
+	ID     int32 `json:"id"`
+}
+
+func (q *Queries) UpdateStatusSensor(ctx context.Context, arg UpdateStatusSensorParams) error {
+	_, err := q.db.ExecContext(ctx, updateStatusSensor, arg.Status, arg.ID)
 	return err
 }

@@ -30,3 +30,12 @@ SELECT * FROM sensors s INNER JOIN informasi_sensor si ON si.id = s.inf_sensor_i
 
 -- name: GetAllInSensorBetweenDate :many
 SELECT * FROM value_sensor WHERE dibuat_pada BETWEEN $1 AND $2;
+
+-- name: GetAllSensorOnStatus :many
+SELECT si.identity, si.id as inf_id, MAX(vs.dibuat_pada) as dibuat_pada, MAX(s.ditempatkan_pada) as ditempatkan_pada FROM informasi_sensor si 
+INNER JOIN sensors s ON si.id = s.inf_sensor_id
+LEFT JOIN value_sensor vs ON s.id = vs.sensor_id
+WHERE si.status = $1 GROUP BY si.id;
+
+-- name: UpdateStatusSensor :exec
+UPDATE informasi_sensor SET status = $1 WHERE id = $2;
