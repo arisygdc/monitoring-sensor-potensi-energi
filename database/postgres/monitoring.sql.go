@@ -8,57 +8,37 @@ import (
 	"time"
 )
 
-const addInformasiSensor = `-- name: AddInformasiSensor :exec
-INSERT INTO informasi_sensor (status, identity) VALUES ($1, $2)
-`
-
-type AddInformasiSensorParams struct {
-	Status   bool   `json:"status"`
-	Identity string `json:"identity"`
-}
-
-func (q *Queries) AddInformasiSensor(ctx context.Context, arg AddInformasiSensorParams) error {
-	_, err := q.db.ExecContext(ctx, addInformasiSensor, arg.Status, arg.Identity)
-	return err
-}
-
 const addMonLocation = `-- name: AddMonLocation :exec
-INSERT INTO monitoring_location (nama, provinsi, kecamatan, desa) VALUES ($1, $2, $3, $4)
+INSERT INTO monitoring_location (provinsi, kecamatan, desa) VALUES ($1, $2, $3)
 `
 
 type AddMonLocationParams struct {
-	Nama      string `json:"nama"`
 	Provinsi  string `json:"provinsi"`
 	Kecamatan string `json:"kecamatan"`
 	Desa      string `json:"desa"`
 }
 
 func (q *Queries) AddMonLocation(ctx context.Context, arg AddMonLocationParams) error {
-	_, err := q.db.ExecContext(ctx, addMonLocation,
-		arg.Nama,
-		arg.Provinsi,
-		arg.Kecamatan,
-		arg.Desa,
-	)
+	_, err := q.db.ExecContext(ctx, addMonLocation, arg.Provinsi, arg.Kecamatan, arg.Desa)
 	return err
 }
 
 const addSensor = `-- name: AddSensor :one
-INSERT INTO sensors (tipe_sensor_id, inf_sensor_id, mon_loc_id, ditempatkan_pada) VALUES ($1, $2, $3, $4) RETURNING id
+INSERT INTO sensors (tipe_sensor_id, mon_loc_id, status, ditempatkan_pada) VALUES ($1, $2, $3, $4) RETURNING id
 `
 
 type AddSensorParams struct {
 	TipeSensorID    int32     `json:"tipe_sensor_id"`
-	InfSensorID     int32     `json:"inf_sensor_id"`
 	MonLocID        int32     `json:"mon_loc_id"`
+	Status          bool      `json:"status"`
 	DitempatkanPada time.Time `json:"ditempatkan_pada"`
 }
 
 func (q *Queries) AddSensor(ctx context.Context, arg AddSensorParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, addSensor,
 		arg.TipeSensorID,
-		arg.InfSensorID,
 		arg.MonLocID,
+		arg.Status,
 		arg.DitempatkanPada,
 	)
 	var id int64
@@ -67,11 +47,16 @@ func (q *Queries) AddSensor(ctx context.Context, arg AddSensorParams) (int64, er
 }
 
 const addTipeSensor = `-- name: AddTipeSensor :exec
-INSERT INTO tipe_sensor (tipe) VALUES ($1)
+INSERT INTO tipe_sensor (tipe, satuan) VALUES ($1, $2)
 `
 
-func (q *Queries) AddTipeSensor(ctx context.Context, tipe string) error {
-	_, err := q.db.ExecContext(ctx, addTipeSensor, tipe)
+type AddTipeSensorParams struct {
+	Tipe   string `json:"tipe"`
+	Satuan string `json:"satuan"`
+}
+
+func (q *Queries) AddTipeSensor(ctx context.Context, arg AddTipeSensorParams) error {
+	_, err := q.db.ExecContext(ctx, addTipeSensor, arg.Tipe, arg.Satuan)
 	return err
 }
 
@@ -112,55 +97,8 @@ func (q *Queries) GetAllInSensorBetweenDate(ctx context.Context, arg GetAllInSen
 	return items, nil
 }
 
-const getAllSensorByIdentity = `-- name: GetAllSensorByIdentity :many
-SELECT s.id, inf_sensor_id, tipe_sensor_id, mon_loc_id, ditempatkan_pada, si.id, status, identity FROM sensors s INNER JOIN informasi_sensor si ON si.id = s.inf_sensor_id WHERE si.identity
-`
-
-type GetAllSensorByIdentityRow struct {
-	ID              int64     `json:"id"`
-	InfSensorID     int32     `json:"inf_sensor_id"`
-	TipeSensorID    int32     `json:"tipe_sensor_id"`
-	MonLocID        int32     `json:"mon_loc_id"`
-	DitempatkanPada time.Time `json:"ditempatkan_pada"`
-	ID_2            int32     `json:"id_2"`
-	Status          bool      `json:"status"`
-	Identity        string    `json:"identity"`
-}
-
-func (q *Queries) GetAllSensorByIdentity(ctx context.Context) ([]GetAllSensorByIdentityRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllSensorByIdentity)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetAllSensorByIdentityRow
-	for rows.Next() {
-		var i GetAllSensorByIdentityRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.InfSensorID,
-			&i.TipeSensorID,
-			&i.MonLocID,
-			&i.DitempatkanPada,
-			&i.ID_2,
-			&i.Status,
-			&i.Identity,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllSensorByLocationID = `-- name: GetAllSensorByLocationID :many
-SELECT id, inf_sensor_id, tipe_sensor_id, mon_loc_id, ditempatkan_pada FROM sensors WHERE mon_loc_id = $1
+SELECT id, tipe_sensor_id, mon_loc_id, status, ditempatkan_pada FROM sensors WHERE mon_loc_id = $1
 `
 
 func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) ([]Sensor, error) {
@@ -174,9 +112,9 @@ func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) 
 		var i Sensor
 		if err := rows.Scan(
 			&i.ID,
-			&i.InfSensorID,
 			&i.TipeSensorID,
 			&i.MonLocID,
+			&i.Status,
 			&i.DitempatkanPada,
 		); err != nil {
 			return nil, err
@@ -193,17 +131,15 @@ func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) 
 }
 
 const getAllSensorOnStatus = `-- name: GetAllSensorOnStatus :many
-SELECT si.identity, si.id as inf_id, MAX(vs.dibuat_pada) as dibuat_pada, MAX(s.ditempatkan_pada) as ditempatkan_pada FROM informasi_sensor si 
-INNER JOIN sensors s ON si.id = s.inf_sensor_id
-LEFT JOIN value_sensor vs ON s.id = vs.sensor_id
-WHERE si.status = $1 GROUP BY si.id
+SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as terakhir_update FROM sensors s
+LEFT JOIN value_sensor vs ON vs.sensor_id = s.id
+WHERE s.status = $1 group by s.id order by s.id asc
 `
 
 type GetAllSensorOnStatusRow struct {
-	Identity        string      `json:"identity"`
-	InfID           int32       `json:"inf_id"`
-	DibuatPada      interface{} `json:"dibuat_pada"`
-	DitempatkanPada interface{} `json:"ditempatkan_pada"`
+	ID              int64       `json:"id"`
+	DitempatkanPada time.Time   `json:"ditempatkan_pada"`
+	TerakhirUpdate  interface{} `json:"terakhir_update"`
 }
 
 func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetAllSensorOnStatusRow, error) {
@@ -215,12 +151,7 @@ func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetA
 	var items []GetAllSensorOnStatusRow
 	for rows.Next() {
 		var i GetAllSensorOnStatusRow
-		if err := rows.Scan(
-			&i.Identity,
-			&i.InfID,
-			&i.DibuatPada,
-			&i.DitempatkanPada,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.DitempatkanPada, &i.TerakhirUpdate); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -234,39 +165,21 @@ func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetA
 	return items, nil
 }
 
-const getInfSensor = `-- name: GetInfSensor :one
-SELECT id, status, identity FROM informasi_sensor WHERE identity = $1
-`
-
-func (q *Queries) GetInfSensor(ctx context.Context, identity string) (InformasiSensor, error) {
-	row := q.db.QueryRowContext(ctx, getInfSensor, identity)
-	var i InformasiSensor
-	err := row.Scan(&i.ID, &i.Status, &i.Identity)
-	return i, err
-}
-
 const getMonitoringLocation = `-- name: GetMonitoringLocation :one
-SELECT id, nama, provinsi, kecamatan, desa FROM monitoring_location WHERE  nama = $1 AND provinsi = $2 AND kecamatan = $3 AND desa = $4
+SELECT id, provinsi, kecamatan, desa FROM monitoring_location WHERE provinsi = $1 AND kecamatan = $2 AND desa = $3
 `
 
 type GetMonitoringLocationParams struct {
-	Nama      string `json:"nama"`
 	Provinsi  string `json:"provinsi"`
 	Kecamatan string `json:"kecamatan"`
 	Desa      string `json:"desa"`
 }
 
 func (q *Queries) GetMonitoringLocation(ctx context.Context, arg GetMonitoringLocationParams) (MonitoringLocation, error) {
-	row := q.db.QueryRowContext(ctx, getMonitoringLocation,
-		arg.Nama,
-		arg.Provinsi,
-		arg.Kecamatan,
-		arg.Desa,
-	)
+	row := q.db.QueryRowContext(ctx, getMonitoringLocation, arg.Provinsi, arg.Kecamatan, arg.Desa)
 	var i MonitoringLocation
 	err := row.Scan(
 		&i.ID,
-		&i.Nama,
 		&i.Provinsi,
 		&i.Kecamatan,
 		&i.Desa,
@@ -275,14 +188,14 @@ func (q *Queries) GetMonitoringLocation(ctx context.Context, arg GetMonitoringLo
 }
 
 const getTipeSensor = `-- name: GetTipeSensor :one
-SELECT id, tipe FROM tipe_sensor WHERE tipe = $1
+SELECT id FROM tipe_sensor WHERE tipe = $1
 `
 
-func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (TipeSensor, error) {
+func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getTipeSensor, tipe)
-	var i TipeSensor
-	err := row.Scan(&i.ID, &i.Tipe)
-	return i, err
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const inputValueSensor = `-- name: InputValueSensor :exec
@@ -301,12 +214,12 @@ func (q *Queries) InputValueSensor(ctx context.Context, arg InputValueSensorPara
 }
 
 const updateStatusSensor = `-- name: UpdateStatusSensor :exec
-UPDATE informasi_sensor SET status = $1 WHERE id = $2
+UPDATE sensors SET status = $1 WHERE id = $2
 `
 
 type UpdateStatusSensorParams struct {
 	Status bool  `json:"status"`
-	ID     int32 `json:"id"`
+	ID     int64 `json:"id"`
 }
 
 func (q *Queries) UpdateStatusSensor(ctx context.Context, arg UpdateStatusSensorParams) error {
