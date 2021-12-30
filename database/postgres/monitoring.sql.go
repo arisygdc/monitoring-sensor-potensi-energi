@@ -5,7 +5,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -132,15 +131,15 @@ func (q *Queries) GetAllSensorByLocationID(ctx context.Context, monLocID int32) 
 }
 
 const getAllSensorOnStatus = `-- name: GetAllSensorOnStatus :many
-SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as last_update FROM sensors s
-RIGHT JOIN value_sensor vs ON vs.sensor_id = s.id
-WHERE status = $1 GROUP BY vs.dibuat_pada
+SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as terakhir_update FROM sensors s
+LEFT JOIN value_sensor vs ON vs.sensor_id = s.id
+WHERE s.status = $1 group by s.id order by s.id asc
 `
 
 type GetAllSensorOnStatusRow struct {
-	ID              sql.NullInt64 `json:"id"`
-	DitempatkanPada sql.NullTime  `json:"ditempatkan_pada"`
-	LastUpdate      interface{}   `json:"last_update"`
+	ID              int64       `json:"id"`
+	DitempatkanPada time.Time   `json:"ditempatkan_pada"`
+	TerakhirUpdate  interface{} `json:"terakhir_update"`
 }
 
 func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetAllSensorOnStatusRow, error) {
@@ -152,7 +151,7 @@ func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetA
 	var items []GetAllSensorOnStatusRow
 	for rows.Next() {
 		var i GetAllSensorOnStatusRow
-		if err := rows.Scan(&i.ID, &i.DitempatkanPada, &i.LastUpdate); err != nil {
+		if err := rows.Scan(&i.ID, &i.DitempatkanPada, &i.TerakhirUpdate); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

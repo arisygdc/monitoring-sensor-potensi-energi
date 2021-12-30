@@ -23,9 +23,9 @@ SELECT * FROM sensors WHERE mon_loc_id = $1;
 SELECT * FROM value_sensor WHERE dibuat_pada BETWEEN $1 AND $2;
 
 -- name: GetAllSensorOnStatus :many
-SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as last_update FROM sensors s
-RIGHT JOIN value_sensor vs ON vs.sensor_id = s.id
-WHERE status = $1 GROUP BY vs.dibuat_pada; 
+SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as terakhir_update FROM sensors s
+LEFT JOIN value_sensor vs ON vs.sensor_id = s.id
+WHERE s.status = $1 group by s.id order by s.id asc;
 
 -- name: UpdateStatusSensor :exec
 UPDATE sensors SET status = $1 WHERE id = $2;

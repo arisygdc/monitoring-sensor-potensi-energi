@@ -32,6 +32,7 @@ func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (s
 			addSensor := postgres.AddSensorParams{
 				TipeSensorID:    tipe,
 				MonLocID:        monLoc.ID,
+				Status:          true,
 				DitempatkanPada: time.Now().UTC(),
 			}
 

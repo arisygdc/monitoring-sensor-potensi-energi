@@ -25,27 +25,27 @@ func (asr StatusRefresh) GetData(ctx context.Context) ([]postgres.GetAllSensorOn
 }
 
 func (asr StatusRefresh) RunJob(ctx context.Context, sensorsData []postgres.GetAllSensorOnStatusRow) {
+	var lastUpdate time.Time
 	for _, v := range sensorsData {
-		lastUpdate := v.DitempatkanPada.(time.Time)
-		if v.DibuatPada != nil {
-			lastUpdate = v.DibuatPada.(time.Time)
-		}
 
-		log.Printf("sensor %v status online", v.Identity)
+		if v.TerakhirUpdate != nil {
+			lastUpdate = v.TerakhirUpdate.(time.Time)
+		} else {
+			lastUpdate = v.DitempatkanPada
+		}
 		lastUpdate = lastUpdate.UTC()
 
-		log.Printf("now %v, last update %v", time.Now(), lastUpdate)
 		if time.Now().After(lastUpdate.Add(asr.interval)) {
 			err := asr.queries.UpdateStatusSensor(ctx, postgres.UpdateStatusSensorParams{
 				Status: false,
-				ID:     v.InfID,
+				ID:     v.ID,
 			})
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 
-			log.Printf("sensor %v status changed to offline", v.Identity)
+			log.Printf("sensor %v status changed to offline", v.ID)
 		}
 		time.Sleep(1 * time.Second)
 	}

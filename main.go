@@ -44,7 +44,7 @@ func AutomatedJobs(ctx context.Context, db *postgres.Queries) {
 	statusRefresh := automated_job.NewStatusRefresh(statusRefreshInterval, db)
 
 	for {
-		time.Sleep(1 * time.Minute)
+		time.Sleep(1 * time.Second)
 		sensors, err := statusRefresh.GetData(ctx)
 		if err != nil {
 			continue
