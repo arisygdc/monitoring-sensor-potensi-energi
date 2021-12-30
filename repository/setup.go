@@ -8,21 +8,10 @@ import (
 	"time"
 )
 
-func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (int64, error) {
-	var idSensor int64
-	tipe, err := r.Database.Queries.GetTipeSensor(ctx, req.Sensor.TipeSensor)
-	if err != nil {
-		return idSensor, errors.New("tipe sensor tidak ditemukan")
-	}
-
+func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (sensor map[string]int32, err error) {
+	sensor = make(map[string]int32)
 	err = r.execTX(ctx, func(q *postgres.Queries) error {
-		infSensor, err := r.setupInfSensor(ctx, q, req.Sensor.Identity)
-		if err != nil {
-			return err
-		}
-
 		monLocArg := postgres.GetMonitoringLocationParams{
-			Nama:      req.Location.Nama,
 			Provinsi:  req.Location.Provinsi,
 			Kecamatan: req.Location.Kecamatan,
 			Desa:      req.Location.Desa,
@@ -33,22 +22,30 @@ func (r Repository) PlaceSensor(ctx context.Context, req reqres.SetupRequest) (i
 			return err
 		}
 
-		addSensor := postgres.AddSensorParams{
-			TipeSensorID:    tipe.ID,
-			InfSensorID:     infSensor.ID,
-			MonLocID:        monLoc.ID,
-			DitempatkanPada: time.Now().UTC(),
-		}
+		for _, v := range req.Sensors {
+			tipe, err := r.Database.Queries.GetTipeSensor(ctx, v)
+			if err != nil {
+				err = errors.New("tipe sensor tidak ditemukan")
+				return err
+			}
 
-		idSensor, err = q.AddSensor(ctx, addSensor)
-		if err != nil {
-			return err
+			addSensor := postgres.AddSensorParams{
+				TipeSensorID:    tipe,
+				MonLocID:        monLoc.ID,
+				DitempatkanPada: time.Now().UTC(),
+			}
+
+			id, err := q.AddSensor(ctx, addSensor)
+			if err != nil {
+				return err
+			}
+			sensor[v] = int32(id)
 		}
 
 		return nil
 	})
 
-	return idSensor, err
+	return sensor, err
 }
 
 func (r Repository) setupLocation(ctx context.Context, q *postgres.Queries, param postgres.GetMonitoringLocationParams) (monLoc postgres.MonitoringLocation, err error) {
@@ -59,21 +56,6 @@ func (r Repository) setupLocation(ctx context.Context, q *postgres.Queries, para
 		}
 
 		monLoc, err = q.GetMonitoringLocation(ctx, param)
-	}
-	return
-}
-
-func (r Repository) setupInfSensor(ctx context.Context, q *postgres.Queries, identity string) (inf postgres.InformasiSensor, err error) {
-	inf, err = q.GetInfSensor(ctx, identity)
-	if err != nil {
-		if err = q.AddInformasiSensor(ctx, postgres.AddInformasiSensorParams{
-			Status:   true,
-			Identity: identity,
-		}); err != nil {
-			return
-		}
-
-		inf, err = q.GetInfSensor(ctx, identity)
 	}
 	return
 }
