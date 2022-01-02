@@ -1,15 +1,9 @@
-/**
-   PostHTTPClient.ino
-
-    Created on: 21.11.2016
-
-*/
-
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
-#define SERVER_IP "192.168.1.234"
+#define SERVER_IP "192.168.1.123"
+#define METHOD_POST "POST"
 
 #ifndef STASSID
 #define STASSID "ssid"
@@ -18,10 +12,13 @@
 
 int id_sensor = 0;
 
+struct HTTP_RESULT {
+  int code;
+  String payload;
+};
+
 void setup() {
-
   Serial.begin(9600);
-
   Serial.println();
   Serial.println();
   Serial.println();
@@ -36,72 +33,55 @@ void setup() {
   Serial.print("Connected! IP address: ");
   Serial.println(WiFi.localIP());
   delay(2000);
-  
-  
+
+  String setupJson = "{\"sensor\": {\"tipe_sensor\":\"angin\",\"identity\":\"cx7\"},\"lokasi\":{\"nama\":\"wit gedhang\",\"provinsi\":\"jawa timur\",\"kecamatan\":\"candi\",\"desa\":\"sidoarjo\"}}";
   if ((WiFi.status() == WL_CONNECTED)) {
-
-    WiFiClient client;
-    HTTPClient http;
-
-    Serial.print("[HTTP] begin...\n");
-    // configure traged server and url
-    http.begin(client, "http://" SERVER_IP "/api/v1/setup"); //HTTP
-    http.addHeader("Content-Type", "application/json");
-
-    Serial.print("[HTTP] POST http://" SERVER_IP "/api/v1/setup ...\n");
-    // start connection and send HTTP header and body
-    int httpCode = http.POST("{\"sensor\": {\"tipe_sensor\":\"angin\",\"identity\":\"cx7\"},\"lokasi\":{\"nama\":\"wit gedhang\",\"provinsi\":\"jawa timur\",\"kecamatan\":\"candi\",\"desa\":\"sidoarjo\"}}");
-    Serial.printf("before %d\n", id_sensor);
-    
-    // httpCode will be negative on error
-    if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      Serial.printf("[HTTP] POST... code: %d\n", httpCode);
-      // file found at server;
-      if (httpCode == 202) {
-        const String& payload = http.getString();
-        DynamicJsonDocument doc(1024);
-        deserializeJson(doc, payload);
-        Serial.println("received payload:\n<<");
-        Serial.println(payload);
-        Serial.println(">>");
-        id_sensor = doc["id_sensor"];
-      }
-    } else {
-      Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    HTTP_RESULT getResponse = HTTPsend(METHOD_POST, "http://" SERVER_IP "/api/v1/setup", setupJson);
+    Serial.printf("[HTTP] POST SETUP DEVICE... code: %d\n", getResponse.code);
+    if (getResponse.code == 202) {
+      const String& payload = getResponse.payload;
+      DynamicJsonDocument doc(1024);
+      deserializeJson(doc, payload);
+      Serial.println("received payload:\n<<");
+      Serial.println(payload);
+      Serial.println(">>");
+      id_sensor = doc["id_sensor"];
     }
-    Serial.printf("id sensor : %d", id_sensor);
-    http.end();
+  }
+  if (id_sensor == 0) {
+    while (1) {
+      Serial.println("Device Not Setup");
+      delay(10000);
+    }
   }
 }
 
 void loop() {
-//   wait for WiFi connection
-  if ((WiFi.status() == WL_CONNECTED) && (id_sensor != 0) {
-
-    WiFiClient client;
-    HTTPClient http;
-
-    Serial.print("[HTTP] begin...\n");
-    // configure traged server and url
-    http.begin(client, "http://" SERVER_IP "/api/v1/sensor/data"); //HTTP
-    http.addHeader("Content-Type", "application/json");
-
-    Serial.print("[HTTP] POST...\n");
-    // start connection and send HTTP header and body
-    int httpCode = http.POST("{\"id_sensor\": 4,\"data\": 76}");
-
-    // httpCode will be negative on error
-    if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      Serial.printf("[HTTP] POST... code: %d\n", httpCode);
-
-    } else {
-      Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
-    }
-
-    http.end();
+  //   wait for WiFi connection
+  HTTP_RESULT getResponse;
+  if ((WiFi.status() == WL_CONNECTED)) {
+    String valueSensorJson = "{\"id_sensor\": 4,\"data\": 76}";
+    getResponse = HTTPsend(METHOD_POST, "http://" SERVER_IP "/api/v1/sensor/data", valueSensorJson);
+    Serial.printf("[HTTP] POST SETUP DEVICE... code: %d\n", getResponse.code);
   }
 
   delay(10000);
+}
+
+HTTP_RESULT HTTPsend(String http_method, String url, String jsonBody) {
+  WiFiClient client;
+  HTTPClient http;
+
+  // configure traged server and url
+  http.begin(client, url); //HTTP
+  http.addHeader("Content-Type", "application/json");
+  int httpCode;
+  if (http_method == METHOD_POST) {
+    // start connection and send HTTP header and body
+    httpCode = http.POST(jsonBody);
+  }
+  // httpCode will be negative on error
+  HTTP_RESULT getResp = {httpCode, http.getString()};
+  http.end();
+  return getResp;
 }
