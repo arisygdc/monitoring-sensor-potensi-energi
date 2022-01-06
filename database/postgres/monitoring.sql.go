@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -185,6 +186,110 @@ func (q *Queries) GetMonitoringLocation(ctx context.Context, arg GetMonitoringLo
 		&i.Desa,
 	)
 	return i, err
+}
+
+const getSensors = `-- name: GetSensors :many
+SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada FROM sensors s 
+RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
+RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
+LIMIT 30
+`
+
+type GetSensorsRow struct {
+	ID              sql.NullInt64 `json:"id"`
+	Tipe            string        `json:"tipe"`
+	Provinsi        string        `json:"provinsi"`
+	Kecamatan       string        `json:"kecamatan"`
+	Desa            string        `json:"desa"`
+	DitempatkanPada sql.NullTime  `json:"ditempatkan_pada"`
+}
+
+func (q *Queries) GetSensors(ctx context.Context) ([]GetSensorsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSensors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSensorsRow
+	for rows.Next() {
+		var i GetSensorsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Tipe,
+			&i.Provinsi,
+			&i.Kecamatan,
+			&i.Desa,
+			&i.DitempatkanPada,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSensorsOnStatus = `-- name: GetSensorsOnStatus :many
+SELECT s.id, tipe_sensor_id, mon_loc_id, status, ditempatkan_pada, ts.id, tipe, satuan, ml.id, provinsi, kecamatan, desa FROM sensors s 
+RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
+RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
+WHERE s.status = $1 LIMIT 30
+`
+
+type GetSensorsOnStatusRow struct {
+	ID              int64     `json:"id"`
+	TipeSensorID    int32     `json:"tipe_sensor_id"`
+	MonLocID        int32     `json:"mon_loc_id"`
+	Status          bool      `json:"status"`
+	DitempatkanPada time.Time `json:"ditempatkan_pada"`
+	ID_2            int32     `json:"id_2"`
+	Tipe            string    `json:"tipe"`
+	Satuan          string    `json:"satuan"`
+	ID_3            int32     `json:"id_3"`
+	Provinsi        string    `json:"provinsi"`
+	Kecamatan       string    `json:"kecamatan"`
+	Desa            string    `json:"desa"`
+}
+
+func (q *Queries) GetSensorsOnStatus(ctx context.Context, status bool) ([]GetSensorsOnStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSensorsOnStatus, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSensorsOnStatusRow
+	for rows.Next() {
+		var i GetSensorsOnStatusRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TipeSensorID,
+			&i.MonLocID,
+			&i.Status,
+			&i.DitempatkanPada,
+			&i.ID_2,
+			&i.Tipe,
+			&i.Satuan,
+			&i.ID_3,
+			&i.Provinsi,
+			&i.Kecamatan,
+			&i.Desa,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTipeSensor = `-- name: GetTipeSensor :one
