@@ -1,15 +1,5 @@
 /* globals Chart:false, feather:false */
 
-axios.get("http://127.0.0.1:8080/api/v1/sensors").then(
-  (response) => {
-      var result = response.data;
-      console.log(result);
-  },
-  (error) => {
-      console.log(error);
-  }
-);
-
 (function () {
     'use strict'
   
