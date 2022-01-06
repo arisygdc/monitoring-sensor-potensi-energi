@@ -189,7 +189,7 @@ func (q *Queries) GetMonitoringLocation(ctx context.Context, arg GetMonitoringLo
 }
 
 const getSensors = `-- name: GetSensors :many
-SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada FROM sensors s 
+SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada, s.status FROM sensors s 
 RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
 RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
 LIMIT 30
@@ -202,6 +202,7 @@ type GetSensorsRow struct {
 	Kecamatan       string        `json:"kecamatan"`
 	Desa            string        `json:"desa"`
 	DitempatkanPada sql.NullTime  `json:"ditempatkan_pada"`
+	Status          sql.NullBool  `json:"status"`
 }
 
 func (q *Queries) GetSensors(ctx context.Context) ([]GetSensorsRow, error) {
@@ -220,6 +221,7 @@ func (q *Queries) GetSensors(ctx context.Context) ([]GetSensorsRow, error) {
 			&i.Kecamatan,
 			&i.Desa,
 			&i.DitempatkanPada,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}

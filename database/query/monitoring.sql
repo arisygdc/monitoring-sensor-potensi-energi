@@ -37,7 +37,7 @@ RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
 WHERE s.status = $1 LIMIT 30;
 
 -- name: GetSensors :many
-SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada FROM sensors s 
+SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada, s.status FROM sensors s 
 RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
 RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
 LIMIT 30;
