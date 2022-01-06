@@ -6,4 +6,5 @@ func (s *Server) APIRoute() {
 	api.POST("/sensor/data", s.ctr.InputData)
 	api.GET("/excel", s.ctr.ExportToexcel)
 	api.GET("/sensors", s.ctr.GetSensors)
+	api.GET("/monitoring/:id_sensor", s.ctr.Monitoring)
 }
