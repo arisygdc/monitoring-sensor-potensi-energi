@@ -16,6 +16,10 @@ type Server struct {
 func New(env config.Environment, controller controller.Controller) (server Server) {
 	engine := gin.Default()
 	gin.SetMode(server.env.ServerEnv)
+	engine.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Next()
+	})
 	server = Server{
 		env:    env,
 		engine: engine,
