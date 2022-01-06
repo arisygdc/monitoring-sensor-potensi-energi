@@ -236,51 +236,36 @@ func (q *Queries) GetSensors(ctx context.Context) ([]GetSensorsRow, error) {
 	return items, nil
 }
 
-const getSensorsOnStatus = `-- name: GetSensorsOnStatus :many
-SELECT s.id, tipe_sensor_id, mon_loc_id, status, ditempatkan_pada, ts.id, tipe, satuan, ml.id, provinsi, kecamatan, desa FROM sensors s 
-RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
-RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
-WHERE s.status = $1 LIMIT 30
+const getTipeSensor = `-- name: GetTipeSensor :one
+SELECT id FROM tipe_sensor WHERE tipe = $1
 `
 
-type GetSensorsOnStatusRow struct {
-	ID              int64     `json:"id"`
-	TipeSensorID    int32     `json:"tipe_sensor_id"`
-	MonLocID        int32     `json:"mon_loc_id"`
-	Status          bool      `json:"status"`
-	DitempatkanPada time.Time `json:"ditempatkan_pada"`
-	ID_2            int32     `json:"id_2"`
-	Tipe            string    `json:"tipe"`
-	Satuan          string    `json:"satuan"`
-	ID_3            int32     `json:"id_3"`
-	Provinsi        string    `json:"provinsi"`
-	Kecamatan       string    `json:"kecamatan"`
-	Desa            string    `json:"desa"`
+func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getTipeSensor, tipe)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
-func (q *Queries) GetSensorsOnStatus(ctx context.Context, status bool) ([]GetSensorsOnStatusRow, error) {
-	rows, err := q.db.QueryContext(ctx, getSensorsOnStatus, status)
+const getValueSensor = `-- name: GetValueSensor :many
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1
+`
+
+type GetValueSensorRow struct {
+	Data       float64   `json:"data"`
+	DibuatPada time.Time `json:"dibuat_pada"`
+}
+
+func (q *Queries) GetValueSensor(ctx context.Context, sensorID int32) ([]GetValueSensorRow, error) {
+	rows, err := q.db.QueryContext(ctx, getValueSensor, sensorID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSensorsOnStatusRow
+	var items []GetValueSensorRow
 	for rows.Next() {
-		var i GetSensorsOnStatusRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.TipeSensorID,
-			&i.MonLocID,
-			&i.Status,
-			&i.DitempatkanPada,
-			&i.ID_2,
-			&i.Tipe,
-			&i.Satuan,
-			&i.ID_3,
-			&i.Provinsi,
-			&i.Kecamatan,
-			&i.Desa,
-		); err != nil {
+		var i GetValueSensorRow
+		if err := rows.Scan(&i.Data, &i.DibuatPada); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -292,17 +277,6 @@ func (q *Queries) GetSensorsOnStatus(ctx context.Context, status bool) ([]GetSen
 		return nil, err
 	}
 	return items, nil
-}
-
-const getTipeSensor = `-- name: GetTipeSensor :one
-SELECT id FROM tipe_sensor WHERE tipe = $1
-`
-
-func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getTipeSensor, tipe)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
 }
 
 const inputValueSensor = `-- name: InputValueSensor :exec

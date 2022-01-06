@@ -30,11 +30,8 @@ WHERE s.status = $1 group by s.id order by s.id asc;
 -- name: UpdateStatusSensor :exec
 UPDATE sensors SET status = $1 WHERE id = $2;
 
--- name: GetSensorsOnStatus :many
-SELECT * FROM sensors s 
-RIGHT JOIN tipe_sensor ts ON s.tipe_sensor_id = ts.id
-RIGHT JOIN monitoring_location ml ON s.mon_loc_id = ml.id
-WHERE s.status = $1 LIMIT 30;
+-- name: GetValueSensor :many 
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1;
 
 -- name: GetSensors :many
 SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada, s.status FROM sensors s 
