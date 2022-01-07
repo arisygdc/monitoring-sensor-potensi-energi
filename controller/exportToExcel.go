@@ -31,8 +31,6 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		return
 	}
 
-	file := fmt.Sprintf("%v/exportfile/%v", dir, filename)
-	f := excelize.NewFile()
 	values, err := ctr.Repo.GetAllValueSensor(ctx, int32(idSensor))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -40,6 +38,9 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		})
 		return
 	}
+
+	file := fmt.Sprintf("%v/exportfile/%v", dir, filename)
+	f := excelize.NewFile()
 
 	sheet := "Sheet1"
 	for i, v := range values {
@@ -60,7 +61,7 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename)) //fmt.Sprintf("attachment; filename=%s", filename) Downloaded file renamed
+	ctx.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
 	ctx.File(file)
 	time.Sleep(1 * time.Second)

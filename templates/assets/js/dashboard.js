@@ -13,6 +13,10 @@ function HrefValue() {
   dashboard.setAttribute('href', localurl+"/index.html")
 }
 
+function Export(id) {
+  window.location.href = api+"/export/sensor/"+id
+}
+
 function PlaceChart(id) {
   axios.get(api+"/monitoring/"+id).then(
     (response) => {

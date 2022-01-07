@@ -110,12 +110,8 @@
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group me-2">
             <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="export">Export</button>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-            <span data-feather="calendar"></span>
-            This week
-          </button>
         </div>
       </div>
 
@@ -147,13 +143,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
     <script src="assets/js/dashboard.js"></script>
     <script>
-      const urlSearchParams = new URLSearchParams(window.location.search);
-      const params = Object.fromEntries(urlSearchParams.entries());
+      const urlSearchParams = new URLSearchParams(window.location.search)
+      const params = Object.fromEntries(urlSearchParams.entries())
       PlaceChart(params.id)
       HrefValue()
       var title = "MONITORING Sensor "+ params.id
-      var montitile = document.getElementById("monitoring-title")
+      var montitile = document.getElementById("monitoring-title"), exportLis = document.getElementById("export")
       montitile.innerText = title
+      exportLis.onclick = function() {Export(params.id)}
     </script>
   </body>
 </html>
