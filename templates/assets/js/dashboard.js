@@ -8,6 +8,11 @@
 var api = "http://127.0.0.1:8080/api/v1";
 var localurl = "http://127.0.0.1:5500/templates";
 
+function HrefValue() {
+  var dashboard = document.getElementById("to_dashboard")
+  dashboard.setAttribute('href', localurl+"/index.html")
+}
+
 function PlaceChart(id) {
   axios.get(api+"/monitoring/"+id).then(
     (response) => {
@@ -28,8 +33,13 @@ function PlaceChart(id) {
         placeMetrics.innerHTML = htmltemplate
         console.log(result)
         // Graphs
-        var ctx = document.getElementById('myChart'), count = 14
-        for(var i=0; i < 15; i++) {
+        var ctx = document.getElementById('myChart'), count = len-1, end = len
+        if(len > 15){
+          count = 14
+          end = 15
+        }
+        
+        for(var i=0; i < end; i++) {
           metrics[i] = result[count].data
           labels[i] = result[count].dibuat_pada
           count--
