@@ -14,8 +14,8 @@ function PlaceChart(id) {
         var result = response.data.metrics
         var labels = [], metrics = [], len = result.length
         
-        if (len > 30) {
-          len = 30
+        if (len > 15) {
+          len = 15
         } 
         
         for(var i=0; i < len; i++) {
