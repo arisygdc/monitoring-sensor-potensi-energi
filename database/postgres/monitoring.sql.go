@@ -248,7 +248,7 @@ func (q *Queries) GetTipeSensor(ctx context.Context, tipe string) (int32, error)
 }
 
 const getValueSensor = `-- name: GetValueSensor :many
-SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1 LIMIT 14
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1 ORDER BY id DESC LIMIT 30
 `
 
 type GetValueSensorRow struct {

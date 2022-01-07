@@ -31,7 +31,7 @@ WHERE s.status = $1 group by s.id order by s.id asc;
 UPDATE sensors SET status = $1 WHERE id = $2;
 
 -- name: GetValueSensor :many 
-SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1 LIMIT 30;
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1 ORDER BY id DESC LIMIT 30;
 
 -- name: GetSensors :many
 SELECT s.id, ts.tipe, ml.provinsi, ml.kecamatan, ml.desa, s.ditempatkan_pada, s.status FROM sensors s 

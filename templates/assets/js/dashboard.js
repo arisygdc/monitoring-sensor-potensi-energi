@@ -13,18 +13,27 @@ function PlaceChart(id) {
     (response) => {
         var result = response.data.metrics
         var labels = [], metrics = [], len = result.length
-        
-        if (len > 15) {
-          len = 15
-        } 
-        
-        for(var i=0; i < len; i++) {
-          metrics[i] = result[i].data
-          labels[i] = result[i].dibuat_pada
+        var htmltemplate = ""
+        var placeMetrics = document.getElementById('metrics')
+        for (var i = 0; i < len; i++) {
+          htmltemplate += "<tr><td>" 
+          +(i+1)
+          +"</td><td>"
+          +result[i].data
+          +"</td><td>"
+          +result[i].dibuat_pada
+          +"</td></tr>";
         }
         
+        placeMetrics.innerHTML = htmltemplate
+        console.log(result)
         // Graphs
-        var ctx = document.getElementById('myChart')
+        var ctx = document.getElementById('myChart'), count = 14
+        for(var i=0; i < 15; i++) {
+          metrics[i] = result[count].data
+          labels[i] = result[count].dibuat_pada
+          count--
+        }
       
         // eslint-disable-next-line no-unused-vars
         var myChart = new Chart(ctx, {
@@ -74,7 +83,7 @@ function GetSensors() {
               +element.provinsi+", "+ element.kecamatan +", "+ element.desa
               +"</td><td>"
               +element.status.Bool
-              +"</td></tr>"
+              +"</td></tr>";
           no++
       });
       ctx.innerHTML = text;
