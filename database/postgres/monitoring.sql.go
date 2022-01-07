@@ -61,43 +61,6 @@ func (q *Queries) AddTipeSensor(ctx context.Context, arg AddTipeSensorParams) er
 	return err
 }
 
-const getAllInSensorBetweenDate = `-- name: GetAllInSensorBetweenDate :many
-SELECT id, sensor_id, data, dibuat_pada FROM value_sensor WHERE dibuat_pada BETWEEN $1 AND $2
-`
-
-type GetAllInSensorBetweenDateParams struct {
-	DibuatPada   time.Time `json:"dibuat_pada"`
-	DibuatPada_2 time.Time `json:"dibuat_pada_2"`
-}
-
-func (q *Queries) GetAllInSensorBetweenDate(ctx context.Context, arg GetAllInSensorBetweenDateParams) ([]ValueSensor, error) {
-	rows, err := q.db.QueryContext(ctx, getAllInSensorBetweenDate, arg.DibuatPada, arg.DibuatPada_2)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ValueSensor
-	for rows.Next() {
-		var i ValueSensor
-		if err := rows.Scan(
-			&i.ID,
-			&i.SensorID,
-			&i.Data,
-			&i.DibuatPada,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllSensorByLocationID = `-- name: GetAllSensorByLocationID :many
 SELECT id, tipe_sensor_id, mon_loc_id, status, ditempatkan_pada FROM sensors WHERE mon_loc_id = $1
 `
@@ -153,6 +116,38 @@ func (q *Queries) GetAllSensorOnStatus(ctx context.Context, status bool) ([]GetA
 	for rows.Next() {
 		var i GetAllSensorOnStatusRow
 		if err := rows.Scan(&i.ID, &i.DitempatkanPada, &i.TerakhirUpdate); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllValueSensor = `-- name: GetAllValueSensor :many
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1
+`
+
+type GetAllValueSensorRow struct {
+	Data       float64   `json:"data"`
+	DibuatPada time.Time `json:"dibuat_pada"`
+}
+
+func (q *Queries) GetAllValueSensor(ctx context.Context, sensorID int32) ([]GetAllValueSensorRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllValueSensor, sensorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllValueSensorRow
+	for rows.Next() {
+		var i GetAllValueSensorRow
+		if err := rows.Scan(&i.Data, &i.DibuatPada); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

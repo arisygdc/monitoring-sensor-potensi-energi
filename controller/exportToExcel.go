@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +12,9 @@ import (
 )
 
 func (ctr Controller) ExportToexcel(ctx *gin.Context) {
-	mulai := ctx.Query("mulai")
-	sampai := ctx.Query("sampai")
+	id := ctx.Param("id_sensor")
 
-	tMulai, tSampai, err := timeBetweenParse(mulai, sampai)
+	idSensor, err := strconv.Atoi(id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -23,7 +22,7 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		return
 	}
 
-	filename := fmt.Sprintf("%v-%v.xlsx", mulai, sampai)
+	filename := fmt.Sprintf("Export sensor id %v-%v.xlsx", id, time.Now().String())
 	dir, err := os.Getwd()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -38,18 +37,19 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		f = excelize.NewFile()
 	}
 
-	values, err := ctr.Repo.GetMonitoringDataBetween(ctx, tMulai, tSampai)
+	values, err := ctr.Repo.GetAllValueSensor(ctx, int32(idSensor))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
 	sheet := "Sheet1"
 	for i, v := range values {
 		row := i + 1
 		axis := fmt.Sprintf("A%d", row)
-		f.SetCellValue(sheet, axis, v.ID)
+		f.SetCellValue(sheet, axis, row)
 		axis = fmt.Sprintf("B%d", row)
 		f.SetCellValue(sheet, axis, v.Data)
 		axis = fmt.Sprintf("C%d", row)
@@ -69,13 +69,4 @@ func (ctr Controller) ExportToexcel(ctx *gin.Context) {
 		})
 	}
 
-}
-
-func timeBetweenParse(mulai string, sampai string) (tMulai time.Time, tSampai time.Time, err error) {
-	tMulai, err = time.Parse("2006-1-2", strings.Trim(mulai, " "))
-	if err != nil {
-		return
-	}
-	tSampai, err = time.Parse("2006-1-2", strings.Trim(sampai, " "))
-	return
 }

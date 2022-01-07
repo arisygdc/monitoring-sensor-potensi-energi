@@ -19,8 +19,8 @@ SELECT * FROM monitoring_location WHERE provinsi = $1 AND kecamatan = $2 AND des
 -- name: GetAllSensorByLocationID :many
 SELECT * FROM sensors WHERE mon_loc_id = $1;
 
--- name: GetAllInSensorBetweenDate :many
-SELECT * FROM value_sensor WHERE dibuat_pada BETWEEN $1 AND $2;
+-- name: GetAllValueSensor :many
+SELECT data, dibuat_pada FROM value_sensor WHERE sensor_id = $1;
 
 -- name: GetAllSensorOnStatus :many
 SELECT s.id, s.ditempatkan_pada, MAX(vs.dibuat_pada) as terakhir_update FROM sensors s
